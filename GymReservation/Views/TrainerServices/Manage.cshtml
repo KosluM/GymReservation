@@ -1,0 +1,40 @@
+﻿@model List<GymReservation.Controllers.TrainerServiceCheckboxViewModel>
+
+@{
+    ViewData["Title"] = "Hizmetleri Yönet";
+    var trainer = ViewBag.Trainer as GymReservation.Models.Trainer;
+}
+
+<h2>@trainer.FullName - Hizmetleri Yönet</h2>
+
+<hr />
+
+<form asp-action="Manage" asp-route-id="@trainer.Id" method="post">
+    <div class="row">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input"
+                           asp-for="@Model[i].IsSelected" />
+                    <label class="form-check-label">
+                        @Model[i].ServiceName
+                    </label>
+
+                    @* Bu hidden alanlar, post sırasında ServiceId ve ServiceName'in gitmesi için *@
+                    <input type="hidden" asp-for="@Model[i].ServiceId" />
+                    <input type="hidden" asp-for="@Model[i].ServiceName" />
+                </div>
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Kaydet</button>
+    <a asp-controller="Trainers" asp-action="Index" class="btn btn-secondary mt-3">Geri Dön</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

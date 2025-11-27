@@ -1,8 +1,104 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hero">
+    <div class="hero-card">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h1 class="hero-title mb-3">
+                    Spor salonu randevularınızı kolayca yönetin.
+                </h1>
+                <p class="hero-subtitle mb-4">
+                    GymReservation; salon, hizmet, antrenör, müsaitlik ve randevu yönetimini
+                    tek bir panelde toplayan bir <strong>ASP.NET Core MVC</strong> uygulamasıdır.
+                    Üyeler online randevu alırken, admin tüm sistemi kontrol eder.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <a asp-controller="Appointments" asp-action="SelectService" class="btn btn-primary">
+                        Randevu Al
+                    </a>
+                    <a asp-controller="GymServices" asp-action="Index" class="btn btn-outline-primary">
+                        Hizmetleri Gör
+                    </a>
+                </div>
+
+                <div class="mt-2">
+                    <span class="badge-tech">ASP.NET Core MVC</span>
+                    <span class="badge-tech">Entity Framework Core</span>
+                    <span class="badge-tech">Identity & Rol Yönetimi</span>
+                </div>
+            </div>
+
+            <div class="col-md-5 mt-4 mt-md-0">
+                <h5 class="mb-3">Sistemin İşleyişi</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <span class="step-badge">1</span>
+                        Salon ve hizmet tanımı (süre, ücret, salon).
+                    </li>
+                    <li class="mb-2">
+                        <span class="step-badge">2</span>
+                        Antrenör–hizmet eşleştirme ve günlük müsaitlik saatleri.
+                    </li>
+                    <li class="mb-2">
+                        <span class="step-badge">3</span>
+                        Üyenin uygun tarih ve saatte randevu alması, çakışma kontrolü.
+                    </li>
+                    <li class="mb-2">
+                        <span class="step-badge">4</span>
+                        Admin panelinden randevuların onay/iptal işlemleri.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
+
+<section class="mt-4">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Salon & Hizmet Yönetimi</h5>
+                    <p class="card-text">
+                        Birden fazla spor salonu ve her salon için farklı hizmetler tanımlanabilir.
+                        Tüm veriler Entity Framework Core ile ilişkisel veritabanında tutulur.
+                    </p>
+                    <a asp-controller="FitnessCenters" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                        Salonları Gör
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Antrenör & Müsaitlik</h5>
+                    <p class="card-text">
+                        Antrenörlerin uzmanlık alanları, verdikleri hizmetler ve çalışma saatleri
+                        üzerinden otomatik bir randevu planlaması yapılır.
+                    </p>
+                    <a asp-controller="Trainers" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                        Antrenörleri Gör
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Randevu & Rol Sistemi</h5>
+                    <p class="card-text">
+                        Kullanıcılar sadece kendi randevularını görebilirken, admin tüm randevular
+                        üzerinde onay/iptal işlemleri yapabilir. Güvenlik ASP.NET Identity ile sağlanır.
+                    </p>
+                    <a asp-controller="Appointments" asp-action="MyAppointments" class="btn btn-outline-primary btn-sm">
+                        Randevularımı Aç
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

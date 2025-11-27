@@ -1,22 +1,242 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+/* ===== GENEL ===== */
+html, body {
+    height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.page-wrapper {
+    min-height: calc(100vh - 60px - 60px);
+}
+
+/* ===== NAVBAR ===== */
+.bg-nav {
+    background-color: #111827; /* koyu ama yumuþak lacivert */
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.logo-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: #22c55e;
+}
+
+.nav-link {
+    color: #e5e7eb !important;
+    font-size: 0.95rem;
+    padding-inline: 0.9rem !important;
+}
+
+    .nav-link:hover {
+        color: #ffffff !important;
+    }
+
+/* ===== FOOTER ===== */
+.footer {
+    background-color: #ffffff;
+}
+
+/* ===== KARTLAR & TABLOLAR ===== */
+.card {
+    border-radius: 0.9rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+    background-color: #ffffff;
+}
+
+.card-title {
+    font-weight: 600;
+}
+
+.card-muted {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    transition: all 0.15s ease;
+}
+
+.table {
+    background-color: #ffffff;
+    border-radius: 0.9rem;
+    overflow: hidden;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+    .table thead {
+        background-color: #f9fafb;
+    }
+
+/* ===== BUTONLAR ===== */
+.btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    border-radius: 999px;
+    font-weight: 500;
+    padding-inline: 1.4rem;
+}
+
+    .btn-primary:hover {
+        background-color: #1d4ed8;
+        border-color: #1d4ed8;
+    }
+
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-danger,
+.btn-outline-warning {
+    border-radius: 999px;
+}
+
+/* Küçük çip / rozet */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background-color: #e5edff;
+    color: #1d4ed8;
+}
+
+/* ===== HERO ALANI ===== */
+.hero {
+    padding-top: 2.5rem;
+    padding-bottom: 1.5rem;
+}
+
+.hero-card {
+    background-color: #ffffff;
+    border-radius: 1.2rem;
+    padding: 2.4rem 2.6rem;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+    border: 1px solid #e5e7eb;
+}
+
+.hero-title {
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.hero-subtitle {
+    font-size: 1rem;
+    color: #4b5563;
+    max-width: 520px;
+}
+
+/* Teknoloji rozetleri */
+.badge-tech {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    margin-right: 0.4rem;
+}
+
+/* ===== STEP ROZETÝ ===== */
+.step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.8rem;
+    margin-right: 0.4rem;
+}
+
+/* ===== BAÞLIKLAR ===== */
+h1, h2, h3, h4 {
+    color: #111827;
+}
+
+/* ===== ANRENÖR KARTLARI ===== */
+.trainer-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #2563eb, #a855f7);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-right: 0.75rem;
+}
+
+.trainer-card-name {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.trainer-specialty {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+/* ===== HÝZMET KARTLARI ===== */
+.service-price {
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.service-duration {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+/* ===== ZAMAN SLOT KARTLARI ===== */
+.slot-card {
+    border-radius: 0.85rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+}
+
+.slot-time {
+    font-weight: 600;
+}
+
+/* ===== RANDEVU DURUM BADGELERÝ ===== */
+.badge-status {
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.badge-status-beklemede {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-status-onaylandý {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.badge-status-iptal {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* FORM HATALARI */
+.text-danger {
+    font-size: 0.85rem;
 }

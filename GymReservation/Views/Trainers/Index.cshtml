@@ -1,0 +1,61 @@
+﻿@model IEnumerable<GymReservation.Models.Trainer>
+
+@{
+    ViewData["Title"] = "Antrenörler";
+}
+
+<h2 class="mb-3">Antrenörlerimiz</h2>
+<p class="text-muted mb-4">Uzman antrenör kadromuzdan dilediğiniz kişiyle randevu oluşturabilirsiniz.</p>
+
+<div class="row g-3">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="trainer-avatar">
+                            @item.FullName.Substring(0, 1).ToUpper()
+                        </div>
+                        <div>
+                            <div class="trainer-card-name">@item.FullName</div>
+                            @if (!string.IsNullOrEmpty(item.Specialty))
+                            {
+                                <div class="trainer-specialty">@item.Specialty</div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(item.Bio))
+                    {
+                        <p class="card-muted mt-2 mb-3">
+                            @item.Bio
+                        </p>
+                    }
+
+                    <div class="mt-auto">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm me-1">
+                            Detaylar
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm me-1">
+                            Düzenle
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm me-1">
+                            Sil
+                        </a>
+                        <a asp-controller="TrainerServices"
+                           asp-action="Manage"
+                           asp-route-id="@item.Id"
+                           class="btn btn-outline-warning btn-sm">
+                            Hizmetleri Yönet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<p class="mt-3">
+    <a asp-action="Create" class="btn btn-primary">Yeni Antrenör Ekle</a>
+</p>

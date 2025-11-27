@@ -1,0 +1,52 @@
+﻿@model IEnumerable<GymReservation.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Randevularım";
+}
+
+<h2 class="mb-3">Randevularım</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Henüz bir randevunuz yok.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Hizmet</th>
+                <th>Antrenör</th>
+                <th>Tarih / Saat</th>
+                <th>Süre (dk)</th>
+                <th>Ücret</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model)
+            {
+                string badgeClass = a.Status switch
+                {
+                    "Onaylandı" => "badge-status badge-status-onaylandı",
+                    "İptal" => "badge-status badge-status-iptal",
+                    _ => "badge-status badge-status-beklemede"
+                };
+
+                <tr>
+                    <td>@a.GymService?.Name</td>
+                    <td>@a.Trainer?.FullName</td>
+                    <td>@a.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@a.DurationMinutes</td>
+                    <td>@a.Price ₺</td>
+                    <td><span class="@badgeClass">@a.Status</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,51 @@
+﻿@model IEnumerable<GymReservation.Models.Appointment>
+
+@{
+    ViewData["Title"] = "Tüm Randevular (Admin)";
+}
+
+<h2 class="mb-3">Tüm Randevular (Admin)</h2>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Kullanıcı</th>
+            <th>Hizmet</th>
+            <th>Antrenör</th>
+            <th>Tarih / Saat</th>
+            <th>Durum</th>
+            <th style="width: 180px;">İşlem</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var a in Model)
+        {
+            string badgeClass = a.Status switch
+            {
+                "Onaylandı" => "badge-status badge-status-onaylandı",
+                "İptal" => "badge-status badge-status-iptal",
+                _ => "badge-status badge-status-beklemede"
+            };
+
+            <tr>
+                <td>@a.User?.Email</td>
+                <td>@a.GymService?.Name</td>
+                <td>@a.Trainer?.FullName</td>
+                <td>@a.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                <td><span class="@badgeClass">@a.Status</span></td>
+                <td>
+                    <form asp-action="ChangeStatus" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input type="hidden" name="status" value="Onaylandı" />
+                        <button type="submit" class="btn btn-sm btn-success me-1">Onayla</button>
+                    </form>
+                    <form asp-action="ChangeStatus" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@a.Id" />
+                        <input type="hidden" name="status" value="İptal" />
+                        <button type="submit" class="btn btn-sm btn-danger">İptal Et</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

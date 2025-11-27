@@ -1,0 +1,57 @@
+﻿@model IEnumerable<GymReservation.Models.Trainer>
+
+@{
+    ViewData["Title"] = "Randevu Al - Antrenör Seç";
+    var service = ViewBag.SelectedService as GymReservation.Models.GymService;
+}
+
+<h2 class="mb-2">Randevu Al - Antrenör Seç</h2>
+
+@if (service != null)
+{
+    <p class="text-muted mb-3">
+        Hizmet: <strong>@service.Name</strong> (@service.DurationMinutes dk, @service.Price ₺)
+    </p>
+}
+
+<div class="row g-3">
+    @foreach (var trainer in Model)
+    {
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="trainer-avatar">
+                            @trainer.FullName.Substring(0, 1).ToUpper()
+                        </div>
+                        <div>
+                            <div class="trainer-card-name">@trainer.FullName</div>
+                            @if (!string.IsNullOrEmpty(trainer.Specialty))
+                            {
+                                <div class="trainer-specialty">@trainer.Specialty</div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(trainer.Bio))
+                    {
+                        <p class="card-muted mt-2 mb-3">@trainer.Bio</p>
+                    }
+
+                    <div class="mt-auto">
+                        <a asp-action="SelectTime"
+                           asp-route-serviceId="@service!.Id"
+                           asp-route-trainerId="@trainer.Id"
+                           class="btn btn-primary btn-sm">
+                            Bu Antrenör ile Devam Et
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<p class="mt-3">
+    <a asp-action="SelectService" class="btn btn-outline-secondary btn-sm">Geri - Hizmet Seç</a>
+</p>

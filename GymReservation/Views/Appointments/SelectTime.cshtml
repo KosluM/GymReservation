@@ -1,0 +1,65 @@
+﻿@model IEnumerable<GymReservation.Models.TrainerAvailability>
+
+@{
+    ViewData["Title"] = "Randevu Al - Tarih/Saat Seç";
+    var service = ViewBag.SelectedService as GymReservation.Models.GymService;
+    var trainer = ViewBag.SelectedTrainer as GymReservation.Models.Trainer;
+}
+
+<h2 class="mb-2">Randevu Al - Tarih/Saat Seç</h2>
+
+@if (service != null && trainer != null)
+{
+    <p class="text-muted mb-3">
+        Hizmet: <strong>@service.Name</strong> (@service.DurationMinutes dk, @service.Price ₺)<br />
+        Antrenör: <strong>@trainer.FullName</strong>
+    </p>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Bu antrenör için gelecekte tanımlı bir müsaitlik bulunamadı.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var slot in Model)
+        {
+            <div class="col-md-4">
+                <div class="slot-card card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-2">@slot.Date.ToString("dd.MM.yyyy")</h5>
+                        <p class="slot-time mb-3">
+                            @slot.StartTime.ToString(@"hh\:mm") -
+                            @slot.EndTime.ToString(@"hh\:mm")
+                        </p>
+
+                        <form asp-action="CreateFromAvailability" method="post">
+                            <input type="hidden" name="availabilityId" value="@slot.Id" />
+                            <input type="hidden" name="serviceId" value="@service!.Id" />
+                            <input type="hidden" name="trainerId" value="@trainer!.Id" />
+                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                Bu Saatte Randevu Al
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<p class="mt-3">
+    <a asp-action="SelectTrainer"
+       asp-route-serviceId="@service?.Id"
+       class="btn btn-outline-secondary btn-sm">
+        Geri - Antrenör Seç
+    </a>
+</p>
