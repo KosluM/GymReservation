@@ -1,10 +1,11 @@
 using GymReservation.Data;
+using GymReservation.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Veritabaný baðlantýsý
+// -------------------- DB --------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
@@ -13,34 +14,33 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// Identity (kullanýcý + rol sistemi)
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+// -------------------- IDENTITY --------------------
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false; // Mail onayý isteme
+    options.SignIn.RequireConfirmedAccount = false;
 })
-    .AddRoles<IdentityRole>()                          // Rol desteði (Admin vs.)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// MVC
+// -------------------- MVC + RAZOR PAGES --------------------
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();   // <<< Ã–NEMLÄ° SATIR
 
 var app = builder.Build();
 
-// -------------------------------------------------------
-// ADMIN ROLÜ VE ADMIN KULLANICI OLUÞTURMA (SEEDING)
-// -------------------------------------------------------
+// -------------------- ADMIN SEED --------------------
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-    // 1) Admin rolünü oluþtur (yoksa)
+    // 1) Admin rolÃ¼
     if (!await roleManager.RoleExistsAsync("Admin"))
     {
         await roleManager.CreateAsync(new IdentityRole("Admin"));
     }
 
-    // 2) Admin kullanýcýsýný oluþtur (yoksa)
+    // 2) Admin kullanÄ±cÄ±
     string adminEmail = "admin@sau.com";
     string adminPassword = "Admin123*";
 
@@ -48,25 +48,27 @@ using (var scope = app.Services.CreateScope())
 
     if (adminUser == null)
     {
-        adminUser = new IdentityUser
+        adminUser = new ApplicationUser
         {
             UserName = adminEmail,
             Email = adminEmail,
-            EmailConfirmed = true
+            FirstName = "Admin",
+            LastName = "KullanÄ±cÄ±"
         };
 
-        var result = await userManager.CreateAsync(adminUser, adminPassword);
-        // istersen result.Succeeded kontrolü ekleyebiliriz ama þimdilik þart deðil
+        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
     }
-
-    // 3) Kullanýcýyý Admin rolüne ekle (ekli deðilse)
-    if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+    else if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
     {
         await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 }
 
-// HTTP pipeline
+// -------------------- PIPELINE --------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -89,6 +91,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages();
+app.MapRazorPages();  // Identity Razor Pages
 
 app.Run();

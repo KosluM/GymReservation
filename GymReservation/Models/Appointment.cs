@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
 
 namespace GymReservation.Models
 {
@@ -10,7 +9,7 @@ namespace GymReservation.Models
 
         [Required]
         public string UserId { get; set; } = null!;
-        public IdentityUser? User { get; set; }
+        public ApplicationUser? User { get; set; }   // ✔ DÜZELTİLDİ
 
         [Required]
         [Display(Name = "Antrenör")]
