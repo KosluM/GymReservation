@@ -2,9 +2,15 @@ using GymReservation.Data;
 using GymReservation.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using GymReservation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+// -------------------- MVC + RAZOR PAGES --------------------
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
+// GEMINI AI SERVİSİ
+builder.Services.AddHttpClient<GeminiFitnessService>();
 // -------------------- DB --------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -90,6 +96,12 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();  // Identity Razor Pages
+
 
 app.MapRazorPages();  // Identity Razor Pages
 
