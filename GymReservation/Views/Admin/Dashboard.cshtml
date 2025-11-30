@@ -1,0 +1,161 @@
+﻿@model GymReservation.Models.AdminDashboardViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Yönetim Paneli";
+
+    // Bugünkü randevular grafik gruplama
+    var statusGroups = Model.TodaysAppointments
+        .GroupBy(a => string.IsNullOrWhiteSpace(a.Status) ? "Belirtilmemiş" : a.Status)
+        .ToList();
+
+    var statusLabels = statusGroups.Select(g => g.Key).ToList();
+    var statusCounts = statusGroups.Select(g => g.Count()).ToList();
+
+    var labelsJson = JsonSerializer.Serialize(statusLabels);
+    var countsJson = JsonSerializer.Serialize(statusCounts);
+}
+
+<h2 class="mt-4 mb-3">Yönetim Paneli</h2>
+
+<!-- KARTLAR -->
+<div class="row mb-4">
+
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-primary h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Toplam Üye</h5>
+                <p class="card-text display-6">@Model.TotalUsers</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-success h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Toplam Antrenör</h5>
+                <p class="card-text display-6">@Model.TotalTrainers</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-info h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Toplam Randevu</h5>
+                <p class="card-text display-6">@Model.TotalAppointments</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card text-bg-warning h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Bekleyen Randevular</h5>
+                <p class="card-text display-6">@Model.PendingAppointments</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- GRAFİK -->
+@if (Model.TodayAppointmentsCount > 0)
+{
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Bugünkü Randevuların Durum Dağılımı</h4>
+
+                    <canvas id="todayStatusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- TABLO -->
+<h4 class="mt-4">Bugünkü Randevular (@Model.Today.ToShortDateString())</h4>
+
+@if (Model.TodayAppointmentsCount == 0)
+{
+    <div class="alert alert-info mt-2">
+        Bugün için kayıtlı randevu bulunmamaktadır.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered mt-2 align-middle shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Saat</th>
+                <th>Üye</th>
+                <th>Antrenör</th>
+                <th>Hizmet</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model.TodaysAppointments)
+            {
+                <tr>
+                    <td>@a.StartDateTime.ToString("HH:mm")</td>
+                    <td>@a.User?.FullName</td>
+                    <td>@a.Trainer?.FullName</td>
+                    <td>@a.GymService?.Name</td>
+                    <td>
+                        @if (a.Status == "Onaylandı")
+                        {
+                            <span class="badge bg-success">@a.Status</span>
+                        }
+                        else if (a.Status == "İptal")
+                        {
+                            <span class="badge bg-danger">@a.Status</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">@a.Status</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        (function () {
+            const total = @Model.TodayAppointmentsCount;
+
+            if (total > 0)
+            {
+                const ctx = document.getElementById('todayStatusChart');
+
+                const labels = @Html.Raw(labelsJson);
+                const values = @Html.Raw(countsJson);
+
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+}

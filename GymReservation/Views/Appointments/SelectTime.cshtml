@@ -1,65 +1,88 @@
 ﻿@model IEnumerable<GymReservation.Models.TrainerAvailability>
 
 @{
-    ViewData["Title"] = "Randevu Al - Tarih/Saat Seç";
+    ViewData["Title"] = "Randevu AI - Tarih/Saat Seç";
     var service = ViewBag.SelectedService as GymReservation.Models.GymService;
     var trainer = ViewBag.SelectedTrainer as GymReservation.Models.Trainer;
 }
 
-<h2 class="mb-2">Randevu Al - Tarih/Saat Seç</h2>
+<h3 class="mt-4 mb-3">Randevu AI - Tarih/Saat Seç</h3>
 
-@if (service != null && trainer != null)
-{
-    <p class="text-muted mb-3">
-        Hizmet: <strong>@service.Name</strong> (@service.DurationMinutes dk, @service.Price ₺)<br />
-        Antrenör: <strong>@trainer.FullName</strong>
-    </p>
-}
+<div class="alert alert-secondary">
+    <strong>Hizmet:</strong> @service?.Name (@service?.DurationMinutes dk, @service?.Price ₺) <br />
+    <strong>Antrenör:</strong> @trainer?.FullName
+</div>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+<style>
+    .time-slot-card {
+        border-radius: 14px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+        transition: 0.15s;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .time-slot-card:hover {
+        transform: translateY(-4px);
+        border-color: #0d6efd;
+    }
+    .time-slot-card .time-text {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+    }
+    .date-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin: 12px 0 6px 2px;
+    }
+</style>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        Bu antrenör için gelecekte tanımlı bir müsaitlik bulunamadı.
+    <div class="alert alert-info mt-3">
+        Seçilen antrenör için ileriye dönük müsait randevu bulunmamaktadır.
     </div>
 }
 else
 {
-    <div class="row g-3">
-        @foreach (var slot in Model)
-        {
-            <div class="col-md-4">
-                <div class="slot-card card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title mb-2">@slot.Date.ToString("dd.MM.yyyy")</h5>
-                        <p class="slot-time mb-3">
-                            @slot.StartTime.ToString(@"hh\:mm") -
-                            @slot.EndTime.ToString(@"hh\:mm")
-                        </p>
+    @{
+        var grouped = Model
+            .OrderBy(a => a.Date).ThenBy(a => a.StartTime)
+            .GroupBy(a => a.Date.Date)
+            .ToList();
+    }
 
-                        <form asp-action="CreateFromAvailability" method="post">
-                            <input type="hidden" name="availabilityId" value="@slot.Id" />
-                            <input type="hidden" name="serviceId" value="@service!.Id" />
-                            <input type="hidden" name="trainerId" value="@trainer!.Id" />
-                            <button type="submit" class="btn btn-success btn-sm w-100">
-                                Bu Saatte Randevu Al
-                            </button>
-                        </form>
-                    </div>
+    @foreach (var dayGroup in grouped)
+    {
+        <div class="date-title">@dayGroup.Key:dd.MM.yyyy (@dayGroup.Key:dddd)</div>
+
+        <div class="row">
+            @foreach (var slot in dayGroup)
+            {
+                var start = slot.Date + slot.StartTime;
+                var end = slot.Date + slot.EndTime;
+
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <form asp-action="CreateFromAvailability" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="availabilityId" value="@slot.Id" />
+                        <input type="hidden" name="serviceId" value="@service!.Id" />
+                        <input type="hidden" name="trainerId" value="@trainer!.Id" />
+
+                        <button class="btn p-0 w-100" type="submit" style="background:none; border:none;">
+                            <div class="time-slot-card p-3">
+                                <div class="time-text">
+                                    @start.ToString("HH:mm") - @end.ToString("HH:mm")
+                                </div>
+                                <div class="text-muted mt-1">
+                                    Süre: @((end-start).TotalMinutes) dk
+                                </div>
+                                <span class="badge bg-success mt-2">Müsait</span>
+                            </div>
+                        </button>
+                    </form>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 }
-
-<p class="mt-3">
-    <a asp-action="SelectTrainer"
-       asp-route-serviceId="@service?.Id"
-       class="btn btn-outline-secondary btn-sm">
-        Geri - Antrenör Seç
-    </a>
-</p>

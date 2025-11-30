@@ -1,11 +1,13 @@
 ﻿@model IEnumerable<GymReservation.Models.Trainer>
+@await Html.PartialAsync("_BookingSteps")
 
 @{
     ViewData["Title"] = "Randevu Al - Antrenör Seç";
     var service = ViewBag.SelectedService as GymReservation.Models.GymService;
 }
 
-<h2 class="mb-2">Randevu Al - Antrenör Seç</h2>
+<h2 class="mt-4 mb-3">Randevu al-Antrönör seç</h2>
+
 
 @if (service != null)
 {

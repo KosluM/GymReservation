@@ -47,19 +47,28 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="TrainerAvailabilities" asp-action="Index">Müsaitlikler</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Appointments" asp-action="SelectService">Randevu Al</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Appointments" asp-action="MyAppointments">Randevularım</a>
-                        </li>
+
+                            @* Giriş yapan kullanıcıya özel menüler *@
+                            @if (User.Identity!.IsAuthenticated)
+                            {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Appointments" asp-action="SelectService">Randevu Al</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Appointments" asp-action="MyAppointments">Randevularım</a>
+                            </li>
+                            }
+                   
+                        @* Sadece Admin’e görünen linkler *@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-warning" asp-controller="Appointments" asp-action="AdminIndex">
-                                    Randevular (Admin)
-                                </a>
+                                <a class="nav-link text-dark" asp-controller="Appointments" asp-action="AdminIndex">Randevular (Admin)</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Admin" asp-action="Dashboard">Yönetim Paneli</a>
                             </li>
                         }
                     </ul>

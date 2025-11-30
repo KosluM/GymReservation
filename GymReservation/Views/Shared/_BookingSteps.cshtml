@@ -1,0 +1,35 @@
+﻿@{
+    // ViewBag.CurrentStep: 1, 2 veya 3 olacak
+    int current = ViewBag.CurrentStep is int s ? s : 1;
+
+    string StepClass(int step) =>
+        step < current ? "bg-success text-white" :
+        step == current ? "bg-primary text-white" :
+        "bg-light";
+}
+
+<div class="mb-3">
+    <div class="d-flex justify-content-between">
+        <div class="flex-fill me-2">
+            <div class="card @StepClass(1)">
+                <div class="card-body py-2 text-center">
+                    <strong>1.</strong> Hizmet Seç
+                </div>
+            </div>
+        </div>
+        <div class="flex-fill me-2">
+            <div class="card @StepClass(2)">
+                <div class="card-body py-2 text-center">
+                    <strong>2.</strong> Antrenör Seç
+                </div>
+            </div>
+        </div>
+        <div class="flex-fill">
+            <div class="card @StepClass(3)">
+                <div class="card-body py-2 text-center">
+                    <strong>3.</strong> Tarih & Saat
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,48 +1,57 @@
 ﻿@model IEnumerable<GymReservation.Models.Appointment>
 
 @{
-    ViewData["Title"] = "Tüm Randevular (Admin)";
+    ViewData["Title"] = "Randevular (Admin)";
 }
 
-<h2 class="mb-3">Tüm Randevular (Admin)</h2>
+<h2 class="mt-4 mb-3">Randevular (Admin)</h2>
 
-<table class="table table-striped align-middle">
-    <thead>
+<table class="table table-striped table-bordered align-middle">
+    <thead class="table-dark">
         <tr>
-            <th>Kullanıcı</th>
-            <th>Hizmet</th>
+            <th>Tarih</th>
+            <th>Saat</th>
+            <th>Üye</th>
             <th>Antrenör</th>
-            <th>Tarih / Saat</th>
+            <th>Hizmet</th>
             <th>Durum</th>
-            <th style="width: 180px;">İşlem</th>
+            <th>İşlemler</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var a in Model)
         {
-            string badgeClass = a.Status switch
-            {
-                "Onaylandı" => "badge-status badge-status-onaylandı",
-                "İptal" => "badge-status badge-status-iptal",
-                _ => "badge-status badge-status-beklemede"
-            };
-
             <tr>
-                <td>@a.User?.Email</td>
-                <td>@a.GymService?.Name</td>
+                <td>@a.StartDateTime.ToString("dd.MM.yyyy")</td>
+                <td>@a.StartDateTime.ToString("HH:mm")</td>
+                <td>@a.User?.FullName</td>
                 <td>@a.Trainer?.FullName</td>
-                <td>@a.StartDateTime.ToString("dd.MM.yyyy HH:mm")</td>
-                <td><span class="@badgeClass">@a.Status</span></td>
+                <td>@a.GymService?.Name</td>
                 <td>
-                    <form asp-action="ChangeStatus" method="post" class="d-inline">
+                    @if (a.Status == "Onaylandı")
+                    {
+                        <span class="badge bg-success">Onaylandı</span>
+                    }
+                    else if (a.Status == "İptal")
+                    {
+                        <span class="badge bg-danger">İptal</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Beklemede</span>
+                    }
+                </td>
+                <td>
+                    <form asp-action="ChangeStatus" method="post" class="d-flex gap-2">
                         <input type="hidden" name="id" value="@a.Id" />
-                        <input type="hidden" name="status" value="Onaylandı" />
-                        <button type="submit" class="btn btn-sm btn-success me-1">Onayla</button>
-                    </form>
-                    <form asp-action="ChangeStatus" method="post" class="d-inline">
-                        <input type="hidden" name="id" value="@a.Id" />
-                        <input type="hidden" name="status" value="İptal" />
-                        <button type="submit" class="btn btn-sm btn-danger">İptal Et</button>
+
+                        <button name="status" value="Onaylandı" class="btn btn-success btn-sm">
+                            ✓ Onayla
+                        </button>
+
+                        <button name="status" value="İptal" class="btn btn-danger btn-sm">
+                            ✕ İptal
+                        </button>
                     </form>
                 </td>
             </tr>

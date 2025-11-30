@@ -12,7 +12,7 @@ namespace GymReservation.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
 
-        // 🔹 ARTIK BU MODELİ KULLANIYORUZ
+        // Güncel model
         private const string Model = "gemini-2.5-flash";
 
         public GeminiFitnessService(IConfiguration configuration, HttpClient httpClient)
@@ -69,7 +69,6 @@ Bilgiler:
             var json = JsonSerializer.Serialize(body);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // 🔹 Resmi endpoint: v1beta + model adı
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent";
 
             var response = await _httpClient.PostAsync(url, content);
@@ -92,14 +91,50 @@ Bilgiler:
                     .GetProperty("text")
                     .GetString();
 
-                return string.IsNullOrWhiteSpace(text)
-                    ? "Gemini yanıt döndü ama metin alınamadı."
-                    : text.Trim();
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return "Gemini yanıt döndü ama metin alınamadı.";
+                }
+
+                // 🔹 Burada markdown'ı sade HTML'e çeviriyoruz
+                var html = ConvertMarkdownToHtml(text.Trim());
+                return html;
             }
             catch
             {
                 return "Gemini yanıtı beklenen formatta değildi.";
             }
+        }
+
+        // 🔧 Basit markdown → HTML temizleyici
+        private string ConvertMarkdownToHtml(string markdown)
+        {
+            if (string.IsNullOrWhiteSpace(markdown))
+                return string.Empty;
+
+            var html = markdown;
+
+            // Başlık işaretlerini sadeleştir
+            html = html.Replace("### **", "")
+                       .Replace("**###", "")
+                       .Replace("### ", "");
+
+            // Kalın yazı işaretlerini temizle
+            html = html.Replace("**", "");
+
+            // Yatay çizgileri temizle
+            html = html.Replace("---", "");
+
+            // Bullet işaretlerini daha hoş hale getir
+            html = html.Replace("*   ", "• ");
+            html = html.Replace("* ", "• ");
+
+            // Satır sonlarını HTML <br> ile değiştir
+            html = html.Replace("\r\n", "\n");
+            html = html.Replace("\n\n", "<br /><br />");
+            html = html.Replace("\n", "<br />");
+
+            return html;
         }
     }
 }

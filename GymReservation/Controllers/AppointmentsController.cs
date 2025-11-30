@@ -52,6 +52,8 @@ namespace GymReservation.Controllers
         // ADIM 1: Hizmet seç
         public async Task<IActionResult> SelectService()
         {
+            ViewBag.CurrentStep = 1;
+
             var services = await _context.GymServices
                 .Include(s => s.FitnessCenter)
                 .ToListAsync();
@@ -62,6 +64,8 @@ namespace GymReservation.Controllers
         // ADIM 2: Hizmeti verebilen antrenörü seç
         public async Task<IActionResult> SelectTrainer(int serviceId)
         {
+            ViewBag.CurrentStep = 2;
+
             var service = await _context.GymServices
                 .Include(s => s.FitnessCenter)
                 .FirstOrDefaultAsync(s => s.Id == serviceId);
@@ -81,6 +85,8 @@ namespace GymReservation.Controllers
         // ADIM 3: Tarih / saat seç
         public async Task<IActionResult> SelectTime(int serviceId, int trainerId)
         {
+            ViewBag.CurrentStep = 3;
+
             var service = await _context.GymServices.FindAsync(serviceId);
             var trainer = await _context.Trainers.FindAsync(trainerId);
 
