@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymReservation.Data;
 using GymReservation.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GymReservation.Controllers
 {
+    [Authorize]
     public class GymServicesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,7 +19,7 @@ namespace GymReservation.Controllers
             _context = context;
         }
 
-        // GET: GymServices
+        // LISTE - Herkes görebilir
         public async Task<IActionResult> Index()
         {
             var list = await _context.GymServices
@@ -27,16 +29,16 @@ namespace GymReservation.Controllers
             return View(list);
         }
 
-        // GET: GymServices/Create
+        // --- SADECE ADMIN ---
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             ViewBag.FitnessCenters = new SelectList(_context.FitnessCenters, "Id", "Name");
             return View();
         }
 
-        // POST: GymServices/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(GymService gymService)
         {
             if (ModelState.IsValid)
@@ -50,27 +52,23 @@ namespace GymReservation.Controllers
             return View(gymService);
         }
 
-        // GET: GymServices/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
 
             var gymService = await _context.GymServices.FindAsync(id);
-            if (gymService == null)
-                return NotFound();
+            if (gymService == null) return NotFound();
 
             ViewBag.FitnessCenters = new SelectList(_context.FitnessCenters, "Id", "Name", gymService.FitnessCenterId);
             return View(gymService);
         }
 
-        // POST: GymServices/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, GymService gymService)
         {
-            if (id != gymService.Id)
-                return NotFound();
+            if (id != gymService.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
@@ -83,32 +81,27 @@ namespace GymReservation.Controllers
             return View(gymService);
         }
 
-        // GET: GymServices/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
 
             var gymService = await _context.GymServices
                 .Include(s => s.FitnessCenter)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
-            if (gymService == null)
-                return NotFound();
-
+            if (gymService == null) return NotFound();
             return View(gymService);
         }
 
-        // POST: GymServices/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var gymService = await _context.GymServices.FindAsync(id);
+
             if (gymService != null)
-            {
                 _context.GymServices.Remove(gymService);
-            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace GymReservation.Controllers
 {
+    [Authorize] // login olan herkes görebilir
     public class TrainersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,21 +18,24 @@ namespace GymReservation.Controllers
             _context = context;
         }
 
-        // H everyone: Antrenör listesi (kartlı göstereceğiz)
-        [AllowAnonymous]
+        // Liste - Herkes görebilir
         public async Task<IActionResult> Index()
         {
-            var trainers = await _context.Trainers.ToListAsync();
+            var trainers = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .ToListAsync();
+
             return View(trainers);
         }
 
-        // Sadece admin görsün diye Details'i de korumak istersen buraya [AllowAnonymous] ekleme
-        [AllowAnonymous]
+        // Detay - Herkes görebilir
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var trainer = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .ThenInclude(ts => ts.GymService)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (trainer == null) return NotFound();
@@ -39,17 +43,12 @@ namespace GymReservation.Controllers
             return View(trainer);
         }
 
-        // GET: Trainers/Create
+        // --- SADECE ADMIN ---
         [Authorize(Roles = "Admin")]
-        public IActionResult Create()
-        {
-            return View();
-        }
+        public IActionResult Create() => View();
 
-        // POST: Trainers/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Trainer trainer)
         {
             if (ModelState.IsValid)
@@ -61,7 +60,6 @@ namespace GymReservation.Controllers
             return View(trainer);
         }
 
-        // GET: Trainers/Edit/5
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -73,10 +71,8 @@ namespace GymReservation.Controllers
             return View(trainer);
         }
 
-        // POST: Trainers/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Trainer trainer)
         {
             if (id != trainer.Id) return NotFound();
@@ -90,33 +86,27 @@ namespace GymReservation.Controllers
             return View(trainer);
         }
 
-        // GET: Trainers/Delete/5
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
-            var trainer = await _context.Trainers
-                .FirstOrDefaultAsync(m => m.Id == id);
-
+            var trainer = await _context.Trainers.FindAsync(id);
             if (trainer == null) return NotFound();
 
             return View(trainer);
         }
 
-        // POST: Trainers/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
+        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var trainer = await _context.Trainers.FindAsync(id);
-            if (trainer != null)
-            {
-                _context.Trainers.Remove(trainer);
-                await _context.SaveChangesAsync();
-            }
 
+            if (trainer != null)
+                _context.Trainers.Remove(trainer);
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
     }

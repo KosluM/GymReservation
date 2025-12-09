@@ -45,12 +45,12 @@
 }
 else
 {
-    @{
+    
         var grouped = Model
             .OrderBy(a => a.Date).ThenBy(a => a.StartTime)
             .GroupBy(a => a.Date.Date)
             .ToList();
-    }
+    
 
     @foreach (var dayGroup in grouped)
     {

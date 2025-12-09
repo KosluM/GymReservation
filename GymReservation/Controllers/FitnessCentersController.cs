@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GymReservation.Data;
 using GymReservation.Models;
 
 namespace GymReservation.Controllers
 {
+    [Authorize] // sadece giriş yapanlar
     public class FitnessCentersController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,42 +17,38 @@ namespace GymReservation.Controllers
             _context = context;
         }
 
-        // GET: FitnessCenters
+        // LISTE - Üye + Admin görebilir
         public async Task<IActionResult> Index()
         {
-            return View(await _context.FitnessCenters.ToListAsync());
+            var centers = await _context.FitnessCenters.ToListAsync();
+            return View(centers);
         }
 
-        // GET: FitnessCenters/Details/5
+        // DETAY - Üye + Admin görebilir
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var fitnessCenter = await _context.FitnessCenters
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fitnessCenter == null)
-            {
-                return NotFound();
-            }
+            var center = await _context.FitnessCenters
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-            return View(fitnessCenter);
+            if (center == null) return NotFound();
+
+            return View(center);
         }
 
-        // GET: FitnessCenters/Create
+        // ======== BUNDAN SONRASI SADECE ADMIN ========
+
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: FitnessCenters/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Address,OpeningTime,ClosingTime")] FitnessCenter fitnessCenter)
+        public async Task<IActionResult> Create(FitnessCenter fitnessCenter)
         {
             if (ModelState.IsValid)
             {
@@ -65,93 +59,59 @@ namespace GymReservation.Controllers
             return View(fitnessCenter);
         }
 
-        // GET: FitnessCenters/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var fitnessCenter = await _context.FitnessCenters.FindAsync(id);
-            if (fitnessCenter == null)
-            {
-                return NotFound();
-            }
-            return View(fitnessCenter);
+            var center = await _context.FitnessCenters.FindAsync(id);
+            if (center == null) return NotFound();
+
+            return View(center);
         }
 
-        // POST: FitnessCenters/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Address,OpeningTime,ClosingTime")] FitnessCenter fitnessCenter)
+        public async Task<IActionResult> Edit(int id, FitnessCenter fitnessCenter)
         {
-            if (id != fitnessCenter.Id)
-            {
-                return NotFound();
-            }
+            if (id != fitnessCenter.Id) return NotFound();
 
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(fitnessCenter);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!FitnessCenterExists(fitnessCenter.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                _context.Update(fitnessCenter);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(fitnessCenter);
         }
 
-        // GET: FitnessCenters/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var fitnessCenter = await _context.FitnessCenters
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (fitnessCenter == null)
-            {
-                return NotFound();
-            }
+            var center = await _context.FitnessCenters
+                .FirstOrDefaultAsync(x => x.Id == id);
+            if (center == null) return NotFound();
 
-            return View(fitnessCenter);
+            return View(center);
         }
 
-        // POST: FitnessCenters/Delete/5
+        [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var fitnessCenter = await _context.FitnessCenters.FindAsync(id);
-            if (fitnessCenter != null)
+            var center = await _context.FitnessCenters.FindAsync(id);
+            if (center != null)
             {
-                _context.FitnessCenters.Remove(fitnessCenter);
+                _context.FitnessCenters.Remove(center);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool FitnessCenterExists(int id)
-        {
-            return _context.FitnessCenters.Any(e => e.Id == id);
         }
     }
 }
