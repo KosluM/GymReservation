@@ -4,35 +4,46 @@
     ViewData["Title"] = "Salon Düzenle";
 }
 
-<h1>Salon Düzenle</h1>
+<h2 class="mb-3">Salon Düzenle</h2>
 
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+<form asp-action="Edit" method="post" class="card shadow-sm">
+    <div class="card-body">
 
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+        <input type="hidden" asp-for="Id" />
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Address" class="form-label"></label>
+            <input asp-for="Address" class="form-control" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="OpeningTime" class="form-label"></label>
+                <input asp-for="OpeningTime" type="time" class="form-control" />
+                <span asp-validation-for="OpeningTime" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Address" class="form-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
+            <div class="col-md-6 mb-3">
+                <label asp-for="ClosingTime" class="form-label"></label>
+                <input asp-for="ClosingTime" type="time" class="form-control" />
+                <span asp-validation-for="ClosingTime" class="text-danger"></span>
             </div>
+        </div>
 
-            <button type="submit" class="btn btn-primary">Kaydet</button>
-            <a asp-action="Index" class="btn btn-secondary">Geri Dön</a>
-        </form>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-secondary">İptal</a>
     </div>
-</div>
+</form>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

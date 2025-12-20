@@ -1,0 +1,25 @@
+﻿@model IEnumerable<GymReservation.Models.FitnessCenter>
+
+@{
+    ViewData["Title"] = "Salon Seç";
+}
+
+<h2>Salon Seç</h2>
+
+<div class="row">
+    @foreach (var center in Model)
+    {
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@center.Name</h5>
+                    <a asp-action="SelectService"
+                       asp-route-fitnessCenterId="@center.Id"
+                       class="btn btn-primary">
+                        Bu Salondan Randevu Al
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

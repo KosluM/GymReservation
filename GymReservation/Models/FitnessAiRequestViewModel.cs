@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace GymReservation.Models
 {
@@ -34,7 +35,11 @@ namespace GymReservation.Models
         [Display(Name = "Ek Bilgi (opsiyonel)")]
         public string? AdditionalInfo { get; set; }
 
-        // Gemini sonucunu burada tutacağız
+       
+        [Display(Name = "Referans Fotoğraf (opsiyonel)")]
+        public IFormFile? Photo { get; set; }
+
+       
         public string? ResultText { get; set; }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace GymReservation.Controllers
 {
-    [Authorize] // herkes giriş yapınca görebilir
+    [Authorize]
     public class TrainerAvailabilitiesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -24,6 +24,7 @@ namespace GymReservation.Controllers
         {
             var list = await _context.TrainerAvailabilities
                 .Include(t => t.Trainer)
+                    .ThenInclude(tr => tr.FitnessCenter)
                 .OrderBy(t => t.Date)
                 .ThenBy(t => t.StartTime)
                 .ToListAsync();
@@ -31,7 +32,8 @@ namespace GymReservation.Controllers
             return View(list);
         }
 
-        // --- SADECE ADMIN ---
+        // ---------- SADECE ADMIN ----------
+
         [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
@@ -44,7 +46,31 @@ namespace GymReservation.Controllers
         public async Task<IActionResult> Create(TrainerAvailability trainerAvailability)
         {
             if (trainerAvailability.EndTime <= trainerAvailability.StartTime)
-                ModelState.AddModelError("", "Bitiş saati başlangıçtan büyük olmalı.");
+            {
+                ModelState.AddModelError("", "Bitiş saati başlangıç saatinden büyük olmalıdır.");
+            }
+
+            // SALON ÇALIŞMA SAATİ KONTROLÜ
+            var trainer = await _context.Trainers
+                .Include(t => t.FitnessCenter)
+                .FirstOrDefaultAsync(t => t.Id == trainerAvailability.TrainerId);
+
+            if (trainer?.FitnessCenter == null)
+            {
+                ModelState.AddModelError("", "Antrenörün bağlı olduğu salon bulunamadı.");
+            }
+            else
+            {
+                var open = trainer.FitnessCenter.OpeningTime;
+                var close = trainer.FitnessCenter.ClosingTime;
+
+                if (trainerAvailability.StartTime < open || trainerAvailability.EndTime > close)
+                {
+                    ModelState.AddModelError("",
+                        $"Müsaitlik saatleri salon çalışma saatleri dışında olamaz. " +
+                        $"({open:hh\\:mm} - {close:hh\\:mm})");
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -53,7 +79,7 @@ namespace GymReservation.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["TrainerId"] = new SelectList(_context.Trainers, "Id", "FullName");
+            ViewData["TrainerId"] = new SelectList(_context.Trainers, "Id", "FullName", trainerAvailability.TrainerId);
             return View(trainerAvailability);
         }
 
@@ -76,7 +102,31 @@ namespace GymReservation.Controllers
             if (id != trainerAvailability.Id) return NotFound();
 
             if (trainerAvailability.EndTime <= trainerAvailability.StartTime)
-                ModelState.AddModelError("", "Bitiş saati başlangıçtan büyük olmalı.");
+            {
+                ModelState.AddModelError("", "Bitiş saati başlangıç saatinden büyük olmalıdır.");
+            }
+
+            // SALON ÇALIŞMA SAATİ KONTROLÜ (EDIT)
+            var trainer = await _context.Trainers
+                .Include(t => t.FitnessCenter)
+                .FirstOrDefaultAsync(t => t.Id == trainerAvailability.TrainerId);
+
+            if (trainer?.FitnessCenter == null)
+            {
+                ModelState.AddModelError("", "Antrenörün bağlı olduğu salon bulunamadı.");
+            }
+            else
+            {
+                var open = trainer.FitnessCenter.OpeningTime;
+                var close = trainer.FitnessCenter.ClosingTime;
+
+                if (trainerAvailability.StartTime < open || trainerAvailability.EndTime > close)
+                {
+                    ModelState.AddModelError("",
+                        $"Müsaitlik saatleri salon çalışma saatleri dışında olamaz. " +
+                        $"({open:hh\\:mm} - {close:hh\\:mm})");
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -96,6 +146,7 @@ namespace GymReservation.Controllers
 
             var entity = await _context.TrainerAvailabilities
                 .Include(t => t.Trainer)
+                    .ThenInclude(tr => tr.FitnessCenter)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (entity == null) return NotFound();

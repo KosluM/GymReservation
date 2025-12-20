@@ -1,157 +1,313 @@
 ﻿@model GymReservation.Models.AdminDashboardViewModel
-@using System.Text.Json
 
 @{
     ViewData["Title"] = "Yönetim Paneli";
-
-    // Bugünkü randevuları duruma göre grupla (Beklemede / Onaylandı / İptal)
-    var statusGroups = Model.TodaysAppointments
-        .GroupBy(a => string.IsNullOrWhiteSpace(a.Status) ? "Belirtilmemiş" : a.Status)
-        .ToList();
-
-    var statusLabels = statusGroups.Select(g => g.Key).ToList();
-    var statusCounts = statusGroups.Select(g => g.Count()).ToList();
-
-    var labelsJson = JsonSerializer.Serialize(statusLabels);
-    var countsJson = JsonSerializer.Serialize(statusCounts);
 }
 
-<h2 class="mt-4 mb-4">Yönetim Paneli</h2>
+<h2 class="mb-4">Yönetim Paneli</h2>
 
-<!-- Özet Kartlar -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <h6 class="text-muted">Toplam Üye</h6>
-                <div class="display-6">@Model.TotalUsers</div>
+                <div class="text-muted">Toplam Üye</div>
+                <div class="fs-3 fw-bold">@Model.TotalUsers</div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-3 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <h6 class="text-muted">Toplam Antrenör</h6>
-                <div class="display-6">@Model.TotalTrainers</div>
+                <div class="text-muted">Toplam Antrenör</div>
+                <div class="fs-3 fw-bold">@Model.TotalTrainers</div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-3 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <h6 class="text-muted">Toplam Randevu</h6>
-                <div class="display-6">@Model.TotalAppointments</div>
+                <div class="text-muted">Toplam Randevu</div>
+                <div class="fs-3 fw-bold">@Model.TotalAppointments</div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-3 mb-3">
-        <div class="card h-100 shadow-sm border-0">
+    <div class="col-md-3">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <h6 class="text-muted">Bekleyen Randevular</h6>
-                <div class="display-6">@Model.PendingAppointments</div>
+                <div class="text-muted">Bekleyen Randevular</div>
+                <div class="fs-3 fw-bold">@Model.PendingAppointments</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Grafik (bugün randevu varsa) -->
-@if (Model.TodayAppointmentsCount > 0)
-{
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Bugünkü Randevuların Durum Dağılımı</h5>
-                    <canvas id="todayStatusChart" height="220"></canvas>
+<h4 class="mb-2">Bugünkü Randevular (@Model.Today.ToString("dd.MM.yyyy"))</h4>
+
+<div class="card mb-4">
+    <div class="card-body">
+        @if (Model.TodaysAppointments == null || !Model.TodaysAppointments.Any())
+        {
+            <div class="alert alert-info mb-0">Bugün için kayıtlı randevu bulunmamaktadır.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Saat</th>
+                            <th>Üye</th>
+                            <th>Antrenör</th>
+                            <th>Hizmet</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.TodaysAppointments)
+                        {
+                            <tr>
+                                <td>@a.StartDateTime.ToString("HH:mm")</td>
+                                <td>@(a.User != null ? (a.User.FirstName + " " + a.User.LastName) : "-")</td>
+                                <td>@(a.Trainer != null ? a.Trainer.FullName : "-")</td>
+                                <td>@(a.GymService != null ? a.GymService.Name : "-")</td>
+                                <td>@a.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<hr class="my-4" />
+
+<h4 class="mb-3">Listeleme &amp; Filtreleme (REST API)</h4>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Modül</label>
+                <select id="adminTab" class="form-select">
+                    <option value="users">Üyeler</option>
+                    <option value="trainers">Antrenörler</option>
+                    <option value="appointments">Randevular</option>
+                </select>
+            </div>
+
+            <div id="usersFilters" class="col-md-4">
+                <label class="form-label">Üye Ara (Ad/Soyad/Email)</label>
+                <input id="userSearch" class="form-control" placeholder="örn: mustafa" />
+            </div>
+
+            <div id="trainersFilters" class="col-md-4 d-none">
+                <label class="form-label">Salon</label>
+                <select id="trainerCenter" class="form-select"></select>
+            </div>
+
+            <div id="appointmentsFilters" class="col-md-2 d-none">
+                <label class="form-label">Durum</label>
+                <select id="apptStatus" class="form-select">
+                    <option value="">Hepsi</option>
+                    <option value="Beklemede">Beklemede</option>
+                    <option value="Onaylandı">Onaylandı</option>
+                    <option value="İptal">İptal</option>
+                </select>
+            </div>
+
+            <div id="appointmentsFilters2" class="col-md-4 d-none">
+                <label class="form-label">Tarih Aralığı</label>
+                <div class="d-flex gap-2">
+                    <input id="apptFrom" type="date" class="form-control" />
+                    <input id="apptTo" type="date" class="form-control" />
                 </div>
+            </div>
+
+            <div class="col-md-2">
+                <button id="btnLoad" class="btn btn-primary w-100">Listele</button>
             </div>
         </div>
     </div>
-}
+</div>
 
-<h4 class="mt-4">Bugünkü Randevular (@Model.Today.ToShortDateString())</h4>
+<div class="card">
+    <div class="card-body">
+        <div id="apiAlert" class="alert alert-info d-none"></div>
 
-@if (Model.TodayAppointmentsCount == 0)
-{
-    <div class="alert alert-info mt-3">
-        Bugün için kayıtlı randevu bulunmamaktadır.
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr id="apiHeadRow"></tr>
+                </thead>
+                <tbody id="apiBody"></tbody>
+            </table>
+        </div>
     </div>
-}
-else
-{
-    <table class="table table-striped table-bordered mt-3 align-middle shadow-sm bg-white">
-        <thead class="table-dark">
-            <tr>
-                <th>Saat</th>
-                <th>Üye</th>
-                <th>Antrenör</th>
-                <th>Hizmet</th>
-                <th>Durum</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var a in Model.TodaysAppointments)
-            {
-                <tr>
-                    <td>@a.StartDateTime.ToString("HH:mm")</td>
-                    <td>@a.User?.FullName</td>
-                    <td>@a.Trainer?.FullName</td>
-                    <td>@a.GymService?.Name</td>
-                    <td>
-                        @if (a.Status == "Onaylandı")
-                        {
-                            <span class="badge bg-success">@a.Status</span>
-                        }
-                        else if (a.Status == "İptal")
-                        {
-                            <span class="badge bg-danger">@a.Status</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark">@a.Status</span>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+</div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-        (function () {
-            const total = @Model.TodayAppointmentsCount;
+        const tabEl = document.getElementById("adminTab");
+        const btnLoad = document.getElementById("btnLoad");
 
-            if (total > 0) {
-                const ctx = document.getElementById('todayStatusChart');
-                if (!ctx) return;
+        const usersFilters = document.getElementById("usersFilters");
+        const trainersFilters = document.getElementById("trainersFilters");
+        const appointmentsFilters = document.getElementById("appointmentsFilters");
+        const appointmentsFilters2 = document.getElementById("appointmentsFilters2");
 
-                const labels = @Html.Raw(@labelsJson);
-                const values = @Html.Raw(@countsJson);
+        const trainerCenter = document.getElementById("trainerCenter");
+        const userSearch = document.getElementById("userSearch");
+        const apptStatus = document.getElementById("apptStatus");
+        const apptFrom = document.getElementById("apptFrom");
+        const apptTo = document.getElementById("apptTo");
 
-                new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: values
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
+        const apiHeadRow = document.getElementById("apiHeadRow");
+        const apiBody = document.getElementById("apiBody");
+        const apiAlert = document.getElementById("apiAlert");
+
+        function showAlert(msg) {
+            apiAlert.textContent = msg;
+            apiAlert.classList.remove("d-none");
+        }
+        function hideAlert() {
+            apiAlert.classList.add("d-none");
+            apiAlert.textContent = "";
+        }
+
+        function setTabUI() {
+            const t = tabEl.value;
+
+            usersFilters.classList.toggle("d-none", t !== "users");
+            trainersFilters.classList.toggle("d-none", t !== "trainers");
+            appointmentsFilters.classList.toggle("d-none", t !== "appointments");
+            appointmentsFilters2.classList.toggle("d-none", t !== "appointments");
+
+            hideAlert();
+            apiHeadRow.innerHTML = "";
+            apiBody.innerHTML = "";
+        }
+
+        async function loadFitnessCenters() {
+            // trainers filtresi için salon listesi
+            const res = await fetch("/api/admin/fitnesscenters");
+            if (!res.ok) return;
+
+            const data = await res.json();
+            trainerCenter.innerHTML = "";
+
+            const optAll = document.createElement("option");
+            optAll.value = "";
+            optAll.textContent = "Hepsi";
+            trainerCenter.appendChild(optAll);
+
+            for (const x of data) {
+                const opt = document.createElement("option");
+                opt.value = x.id;
+                opt.textContent = x.name;
+                trainerCenter.appendChild(opt);
             }
+        }
+
+        function renderTable(columns, rows, rowMapper) {
+            apiHeadRow.innerHTML = "";
+            apiBody.innerHTML = "";
+
+            for (const c of columns) {
+                const th = document.createElement("th");
+                th.textContent = c;
+                apiHeadRow.appendChild(th);
+            }
+
+            for (const r of rows) {
+                const tr = document.createElement("tr");
+                const cells = rowMapper(r);
+                for (const text of cells) {
+                    const td = document.createElement("td");
+                    td.textContent = text ?? "";
+                    tr.appendChild(td);
+                }
+                apiBody.appendChild(tr);
+            }
+
+            if (rows.length === 0) showAlert("Kayıt bulunamadı.");
+        }
+
+        async function loadUsers() {
+            const s = userSearch.value?.trim();
+            const url = s ? `/api/admin/users?search=${encodeURIComponent(s)}` : "/api/admin/users";
+            const res = await fetch(url);
+            if (!res.ok) { showAlert("API hatası: Üyeler çekilemedi."); return; }
+            const data = await res.json();
+
+            renderTable(
+                ["Ad", "Soyad", "Email"],
+                data,
+                x => [x.firstName, x.lastName, x.email]
+            );
+        }
+
+        async function loadTrainers() {
+            const fcId = trainerCenter.value;
+            const url = fcId ? `/api/admin/trainers?fitnessCenterId=${fcId}` : "/api/admin/trainers";
+            const res = await fetch(url);
+            if (!res.ok) { showAlert("API hatası: Antrenörler çekilemedi."); return; }
+            const data = await res.json();
+
+            renderTable(
+                ["Ad Soyad", "Uzmanlık", "Salon"],
+                data,
+                x => [x.fullName, x.specialty, x.fitnessCenterName]
+            );
+        }
+
+        async function loadAppointments() {
+            const status = apptStatus.value;
+            const from = apptFrom.value;
+            const to = apptTo.value;
+
+            const qs = new URLSearchParams();
+            if (status) qs.append("status", status);
+            if (from) qs.append("from", from);
+            if (to) qs.append("to", to);
+
+            const url = qs.toString() ? `/api/admin/appointments?${qs}` : "/api/admin/appointments";
+
+            const res = await fetch(url);
+            if (!res.ok) { showAlert("API hatası: Randevular çekilemedi."); return; }
+            const data = await res.json();
+
+            renderTable(
+                ["Tarih/Saat", "Üye", "Antrenör", "Hizmet", "Salon", "Durum", "Ücret"],
+                data,
+                x => [
+                    new Date(x.startDateTime).toLocaleString(),
+                    x.userName,
+                    x.trainerName,
+                    x.serviceName,
+                    x.fitnessCenterName,
+                    x.status,
+                    x.price
+                ]
+            );
+        }
+
+        btnLoad.addEventListener("click", async () => {
+            hideAlert();
+            const t = tabEl.value;
+
+            if (t === "users") return loadUsers();
+            if (t === "trainers") return loadTrainers();
+            if (t === "appointments") return loadAppointments();
+        });
+
+        tabEl.addEventListener("change", setTabUI);
+
+        // init
+        (async function init() {
+            setTabUI();
+            await loadFitnessCenters();
+            await loadUsers(); // sayfa açılınca üyeleri yükle
         })();
     </script>
 }

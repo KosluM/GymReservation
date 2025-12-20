@@ -28,12 +28,12 @@ namespace GymReservation.Controllers
         public async Task<IActionResult> FitnessRecommendation(FitnessAiRequestViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
 
-            var result = await _geminiService.GetFitnessPlanAsync(model);
-            model.ResultText = result;
+            // 1) Metin planı (Gemini)
+            model.ResultText = await _geminiService.GetFitnessPlanAsync(model);
+
+      
 
             return View(model);
         }

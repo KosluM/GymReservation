@@ -1,16 +1,18 @@
 using GymReservation.Data;
 using GymReservation.Models;
+using GymReservation.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using GymReservation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
 // -------------------- MVC + RAZOR PAGES --------------------
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// GEMINI AI SERVİSİ
+// -------------------- GEMINI AI SERVİSİ --------------------
 builder.Services.AddHttpClient<GeminiFitnessService>();
+
 // -------------------- DB --------------------
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -24,13 +26,17 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
-})
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// -------------------- MVC + RAZOR PAGES --------------------
-builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();   // <<< ÖNEMLİ SATIR
+    
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 3;
+    options.Password.RequiredUniqueChars = 1;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<ApplicationDbContext>();
 
 var app = builder.Build();
 
@@ -47,8 +53,8 @@ using (var scope = app.Services.CreateScope())
     }
 
     // 2) Admin kullanıcı
-    string adminEmail = "admin@sau.com";
-    string adminPassword = "Admin123*";
+    string adminEmail = "G211210302@sakarya.edu.tr";
+    string adminPassword = "sau";
 
     var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -63,16 +69,34 @@ using (var scope = app.Services.CreateScope())
         };
 
         var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+
         if (createResult.Succeeded)
         {
             await userManager.AddToRoleAsync(adminUser, "Admin");
         }
+        else
+        {
+        
+    
+        }
     }
-    else if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+    else
     {
-        await userManager.AddToRoleAsync(adminUser, "Admin");
+        // Kullanıcı varsa role yoksa ekle
+        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+
+
+        // (Bu kısım opsiyonel ama pratik: giriş sorununu net bitirir)
+        var token = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+        await userManager.ResetPasswordAsync(adminUser, token, adminPassword);
     }
 }
+
+// -------------------- DEMO DATA SEED --------------------
+await DbSeeder.SeedAsync(app.Services);
 
 // -------------------- PIPELINE --------------------
 if (app.Environment.IsDevelopment())
@@ -96,13 +120,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages();  // Identity Razor Pages
-
-
-app.MapRazorPages();  // Identity Razor Pages
+app.MapRazorPages(); // Identity Razor Pages
 
 app.Run();

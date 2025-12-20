@@ -19,5 +19,18 @@ namespace GymReservation.Data
         public DbSet<TrainerService> TrainerServices { get; set; } = null!;
         public DbSet<TrainerAvailability> TrainerAvailabilities { get; set; } = null!;
         public DbSet<Appointment> Appointments { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+     
+          
+            builder.Entity<Trainer>()
+                .HasOne(t => t.FitnessCenter)
+                .WithMany() 
+                .HasForeignKey(t => t.FitnessCenterId)
+                .OnDelete(DeleteBehavior.Restrict); 
+        }
     }
 }

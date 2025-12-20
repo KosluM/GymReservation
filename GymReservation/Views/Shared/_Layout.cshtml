@@ -52,13 +52,22 @@
                             @if (User.Identity!.IsAuthenticated)
                             {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Appointments" asp-action="SelectService">Randevu Al</a>
+                                <a class="nav-link text-dark"
+                                   asp-controller="Appointments"
+                                   asp-action="SelectFitnessCenter">
+                                    Randevu Al
+                                </a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Appointments" asp-action="MyAppointments">Randevularım</a>
+                                <a class="nav-link text-dark"
+                                   asp-controller="Appointments"
+                                   asp-action="MyAppointments">
+                                    Randevularım
+                                </a>
                             </li>
                             }
+
 
                         @* Sadece Admin’e görünen linkler *@
                         @if (User.IsInRole("Admin"))

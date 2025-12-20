@@ -20,9 +20,9 @@ namespace GymReservation.Services
             _httpClient = httpClient;
             _apiKey = configuration["Gemini:ApiKey"] ?? "";
 
-            if (!string.IsNullOrWhiteSpace(_apiKey))
+            if (!string.IsNullOrWhiteSpace(_apiKey) &&
+                !_httpClient.DefaultRequestHeaders.Contains("x-goog-api-key"))
             {
-                _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("x-goog-api-key", _apiKey);
             }
         }
@@ -35,6 +35,7 @@ namespace GymReservation.Services
             var prompt = $@"
 Kullanıcının bilgilerine dayanarak fitness + beslenme programı öner.
 TÜRKÇE yaz.
+Cevabı anlaşılır, madde madde ve uygulanabilir şekilde ver.
 
 Bilgiler:
 - Cinsiyet: {req.Gender}
@@ -42,13 +43,17 @@ Bilgiler:
 - Boy: {req.HeightCm} cm
 - Kilo: {req.WeightKg} kg
 - Hedef: {req.Goal}
-- Aktivite Seviyesi: {req.ActivityLevel}
-- Ek Bilgi: {req.AdditionalInfo}
+- Aktivite seviyesi: {req.ActivityLevel}
+- Ek bilgi: {req.AdditionalInfo}
 
-Çıktıyı şu başlıklarla yaz:
-1) Antrenman
-2) Beslenme
-3) Tavsiyeler
+İçerik:
+1) Haftalık antrenman planı (gün gün)
+2) Beslenme önerileri (örnek öğünler)
+3) Dikkat edilmesi gerekenler
+4) Motivasyon / kısa tavsiyeler
+5) 3 ay sonunda beklenen değişim (gerçekçi, abartmadan)
+
+Çıktıyı HTML formatında ver (ör: <h4>, <ul>, <li> kullan).
 ";
 
             var body = new
@@ -69,72 +74,32 @@ Bilgiler:
             var json = JsonSerializer.Serialize(body);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent";
+            // API key querystring ile
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent?key={_apiKey}";
 
             var response = await _httpClient.PostAsync(url, content);
             var result = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
                 return $"Gemini API hatası: {response.StatusCode}\n{result}";
-            }
 
             try
             {
                 using var doc = JsonDocument.Parse(result);
-                var root = doc.RootElement;
 
-                var text = root
+                var text = doc.RootElement
                     .GetProperty("candidates")[0]
                     .GetProperty("content")
                     .GetProperty("parts")[0]
                     .GetProperty("text")
                     .GetString();
 
-                if (string.IsNullOrWhiteSpace(text))
-                {
-                    return "Gemini yanıt döndü ama metin alınamadı.";
-                }
-
-                // 🔹 Burada markdown'ı sade HTML'e çeviriyoruz
-                var html = ConvertMarkdownToHtml(text.Trim());
-                return html;
+                return text ?? "Gemini yanıtı boş döndü.";
             }
             catch
             {
-                return "Gemini yanıtı beklenen formatta değildi.";
+                return "Gemini yanıtı işlenemedi. (JSON parse hatası)";
             }
-        }
-
-        // 🔧 Basit markdown → HTML temizleyici
-        private string ConvertMarkdownToHtml(string markdown)
-        {
-            if (string.IsNullOrWhiteSpace(markdown))
-                return string.Empty;
-
-            var html = markdown;
-
-            // Başlık işaretlerini sadeleştir
-            html = html.Replace("### **", "")
-                       .Replace("**###", "")
-                       .Replace("### ", "");
-
-            // Kalın yazı işaretlerini temizle
-            html = html.Replace("**", "");
-
-            // Yatay çizgileri temizle
-            html = html.Replace("---", "");
-
-            // Bullet işaretlerini daha hoş hale getir
-            html = html.Replace("*   ", "• ");
-            html = html.Replace("* ", "• ");
-
-            // Satır sonlarını HTML <br> ile değiştir
-            html = html.Replace("\r\n", "\n");
-            html = html.Replace("\n\n", "<br /><br />");
-            html = html.Replace("\n", "<br />");
-
-            return html;
         }
     }
 }

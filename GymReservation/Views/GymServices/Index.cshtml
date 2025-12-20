@@ -4,49 +4,48 @@
     ViewData["Title"] = "Hizmetler";
 }
 
-<h2 class="mt-4 mb-3">Hizmetler</h2>
+<h1>Hizmetler</h1>
 
-@if (!Model.Any())
+@if (User.IsInRole("Admin"))
 {
-    <div class="alert alert-info">
-        Tanımlı hizmet bulunmamaktadır.
-    </div>
+    <p>
+        <a class="btn btn-primary" asp-action="Create">Yeni Hizmet Ekle</a>
+    </p>
 }
-else
-{
-    <div class="row">
-        @foreach (var s in Model)
+
+<table class="table table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Hizmet Adı</th>
+            <th>Süre (dk)</th>
+            <th>Fiyat</th>
+            <th>Spor Salonu</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
         {
-            <div class="col-md-4 col-lg-3 mb-3">
-                <div class="card h-100 shadow-sm border-0" style="border-radius: 14px;">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-1">@s.Name</h5>
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.DurationMinutes</td>
+                <td>@item.Price</td>
+                <td>@item.FitnessCenter?.Name</td>
 
-                        @if (s.FitnessCenter != null)
-                        {
-                            <small class="text-muted">
-                                @s.FitnessCenter.Name
-                            </small>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(s.Description))
-                        {
-                            <p class="mt-2" style="font-size: 0.9rem;">
-                                @s.Description
-                            </p>
-                        }
-
-                        <div class="mt-auto pt-2 d-flex justify-content-between align-items-center">
-                            <span class="badge bg-primary">
-                                @s.DurationMinutes dk
-                            </span>
-                            <span class="fw-bold">
-                                @s.Price ₺
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <td>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@item.Id">Düzenle</a>
+ 
+                    <a asp-action="Details"asp-route-id="@item.Id">Detay</a> 
+                    <a asp-action="Delete" asp-route-id ="@item.Id">Sil</a>
+                    }
+                    else
+                    {
+                        <a asp-action="Details" asp-route-id="@item.Id">Detay</a>
+                    }
+                </td>
+            </tr>
         }
-    </div>
-}
+    </tbody>
+</table>

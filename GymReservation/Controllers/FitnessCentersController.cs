@@ -50,6 +50,12 @@ namespace GymReservation.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(FitnessCenter fitnessCenter)
         {
+            //  Çalışma saati doğrulaması
+            if (fitnessCenter.OpeningTime >= fitnessCenter.ClosingTime)
+            {
+                ModelState.AddModelError(string.Empty, "Açılış saati, kapanış saatinden küçük olmalıdır.");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(fitnessCenter);
@@ -76,6 +82,12 @@ namespace GymReservation.Controllers
         public async Task<IActionResult> Edit(int id, FitnessCenter fitnessCenter)
         {
             if (id != fitnessCenter.Id) return NotFound();
+
+            //  Çalışma saati doğrulaması
+            if (fitnessCenter.OpeningTime >= fitnessCenter.ClosingTime)
+            {
+                ModelState.AddModelError(string.Empty, "Açılış saati, kapanış saatinden küçük olmalıdır.");
+            }
 
             if (ModelState.IsValid)
             {

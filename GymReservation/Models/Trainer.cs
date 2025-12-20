@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GymReservation.Models
 {
@@ -20,7 +21,16 @@ namespace GymReservation.Models
         [DataType(DataType.MultilineText)]
         public string? Bio { get; set; }
 
-        // İlişkiler
+        //Antrenörün çalıştığı salon
+        [Required(ErrorMessage = "Salon seçimi zorunludur.")]
+        [Display(Name = "Salon")]
+        public int? FitnessCenterId { get; set; }
+
+
+        [ForeignKey(nameof(FitnessCenterId))]
+        public FitnessCenter? FitnessCenter { get; set; }
+
+        // İlişkiler (AYNEN)
         public ICollection<TrainerService>? TrainerServices { get; set; }
         public ICollection<TrainerAvailability>? Availabilities { get; set; }
         public ICollection<Appointment>? Appointments { get; set; }

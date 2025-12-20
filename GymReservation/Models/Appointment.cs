@@ -9,7 +9,7 @@ namespace GymReservation.Models
 
         [Required]
         public string UserId { get; set; } = null!;
-        public ApplicationUser? User { get; set; }   // ✔ DÜZELTİLDİ
+        public ApplicationUser? User { get; set; }
 
         [Required]
         [Display(Name = "Antrenör")]

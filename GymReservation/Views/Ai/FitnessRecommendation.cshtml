@@ -1,122 +1,103 @@
 ﻿@model GymReservation.Models.FitnessAiRequestViewModel
 
 @{
-    ViewData["Title"] = "Yapay Zeka Fitness Önerisi (Gemini)";
+    ViewData["Title"] = "AI Fitness (Gemini)";
 }
 
-<h2 class="mt-4 mb-3">@ViewData["Title"]</h2>
+<div class="container mt-4">
+    <h2 class="mb-3">AI Fitness (Gemini)</h2>
 
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="FitnessRecommendation" method="post" id="aiForm">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            @Html.AntiForgeryToken()
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning">@TempData["Error"]</div>
+    }
 
-            <div class="mb-3">
-                <label asp-for="Gender" class="form-label"></label>
-                <select asp-for="Gender" class="form-select">
-                    <option>Erkek</option>
-                    <option>Kadın</option>
-                </select>
-                <span asp-validation-for="Gender" class="text-danger"></span>
-            </div>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form asp-action="FitnessRecommendation" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
 
-            <div class="mb-3">
-                <label asp-for="Age" class="form-label"></label>
-                <input asp-for="Age" class="form-control" />
-                <span asp-validation-for="Age" class="text-danger"></span>
-            </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label asp-for="Gender" class="form-label"></label>
+                        <select asp-for="Gender" class="form-select">
+                            <option>Erkek</option>
+                            <option>Kadın</option>
+                        </select>
+                        <span asp-validation-for="Gender" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="HeightCm" class="form-label"></label>
-                <input asp-for="HeightCm" class="form-control" />
-                <span asp-validation-for="HeightCm" class="text-danger"></span>
-            </div>
+                    <div class="col-md-3">
+                        <label asp-for="Age" class="form-label"></label>
+                        <input asp-for="Age" class="form-control" />
+                        <span asp-validation-for="Age" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="WeightKg" class="form-label"></label>
-                <input asp-for="WeightKg" class="form-control" />
-                <span asp-validation-for="WeightKg" class="text-danger"></span>
-            </div>
+                    <div class="col-md-3">
+                        <label asp-for="HeightCm" class="form-label"></label>
+                        <input asp-for="HeightCm" class="form-control" />
+                        <span asp-validation-for="HeightCm" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="Goal" class="form-label"></label>
-                <select asp-for="Goal" class="form-select">
-                    <option>Kilo vermek</option>
-                    <option>Kas kazanmak</option>
-                    <option>Kiloyu korumak</option>
-                </select>
-                <span asp-validation-for="Goal" class="text-danger"></span>
-            </div>
+                    <div class="col-md-3">
+                        <label asp-for="WeightKg" class="form-label"></label>
+                        <input asp-for="WeightKg" class="form-control" />
+                        <span asp-validation-for="WeightKg" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="ActivityLevel" class="form-label"></label>
-                <select asp-for="ActivityLevel" class="form-select">
-                    <option>Düşük</option>
-                    <option>Orta</option>
-                    <option>Yüksek</option>
-                </select>
-                <span asp-validation-for="ActivityLevel" class="text-danger"></span>
-            </div>
+                    <div class="col-md-4">
+                        <label asp-for="Goal" class="form-label"></label>
+                        <select asp-for="Goal" class="form-select">
+                            <option>Kilo vermek</option>
+                            <option>Kas kazanmak</option>
+                            <option>Fit kalmak</option>
+                        </select>
+                        <span asp-validation-for="Goal" class="text-danger"></span>
+                    </div>
 
-            <div class="mb-3">
-                <label asp-for="AdditionalInfo" class="form-label"></label>
-                <textarea asp-for="AdditionalInfo" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="AdditionalInfo" class="text-danger"></span>
-            </div>
+                    <div class="col-md-4">
+                        <label asp-for="ActivityLevel" class="form-label"></label>
+                        <select asp-for="ActivityLevel" class="form-select">
+                            <option>Az</option>
+                            <option>Orta</option>
+                            <option>Yüksek</option>
+                        </select>
+                        <span asp-validation-for="ActivityLevel" class="text-danger"></span>
+                    </div>
 
-            <button id="submitBtn" type="submit" class="btn btn-primary">
-                <span id="btnText">Öneri Oluştur</span>
-                <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-            </button>
-        </form>
-    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Photo" class="form-label"></label>
+                        <input asp-for="Photo" type="file" class="form-control" accept="image/*" />
+                        <span asp-validation-for="Photo" class="text-danger"></span>
+                     
+                    </div>
 
-    <div class="col-md-6">
-        @if (!string.IsNullOrWhiteSpace(Model.ResultText))
-        {
-            <div class="card shadow-lg mt-3 border-0" style="border-radius: 14px;">
-                <div class="card-body">
-                    <h4 class="mb-3" style="font-weight:700; color:#4A6CF7;">
-                        🧠 Kişiye Özel Fitness Programı
-                    </h4>
+                    <div class="col-12">
+                        <label asp-for="AdditionalInfo" class="form-label"></label>
+                        <textarea asp-for="AdditionalInfo" rows="3" class="form-control"></textarea>
+                        <span asp-validation-for="AdditionalInfo" class="text-danger"></span>
+                    </div>
 
-                    <div style="font-size:15px; line-height:1.7;">
-                        @Html.Raw(Model.ResultText)
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">AI Plan Oluştur</button>
                     </div>
                 </div>
-            </div>
-        }
-        else
-        {
-            <div class="alert alert-info mt-3">
-                Formu doldurup gönderdiğinizde burada Gemini'den gelen öneriler şık bir kart içinde görünecek.
-            </div>
-        }
+            </form>
+        </div>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ResultText))
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-bold">Gemini Sonuç (Plan)</div>
+            <div class="card-body">
+                @Html.Raw(Model.ResultText)
+            </div>
+        </div>
+    }
+
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-        (function () {
-            const form = document.getElementById('aiForm');
-            const btn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-
-            if (form && btn) {
-                form.addEventListener('submit', function () {
-                    if (!form.checkValidity()) {
-                        return;
-                    }
-
-                    btn.disabled = true;
-                    btnText.textContent = 'Öneri oluşturuluyor...';
-                    btnSpinner.classList.remove('d-none');
-                });
-            }
-        })();
-    </script>
 }

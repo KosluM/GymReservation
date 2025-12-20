@@ -21,6 +21,7 @@ namespace GymReservation.Controllers
         }
 
         // KULLANICI: Kendi randevularım
+     
         public async Task<IActionResult> MyAppointments()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -28,6 +29,7 @@ namespace GymReservation.Controllers
             var list = await _context.Appointments
                 .Where(a => a.UserId == userId)
                 .Include(a => a.Trainer)
+                    .ThenInclude(t => t.FitnessCenter)
                 .Include(a => a.GymService)
                 .OrderByDescending(a => a.StartDateTime)
                 .ToListAsync();
@@ -35,12 +37,15 @@ namespace GymReservation.Controllers
             return View(list);
         }
 
+    
         // ADMIN: tüm randevular
+      
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminIndex()
         {
             var list = await _context.Appointments
                 .Include(a => a.Trainer)
+                    .ThenInclude(t => t.FitnessCenter)
                 .Include(a => a.GymService)
                 .Include(a => a.User)
                 .OrderByDescending(a => a.StartDateTime)
@@ -49,23 +54,33 @@ namespace GymReservation.Controllers
             return View(list);
         }
 
-        // ADIM 1: Hizmet seç
-        public async Task<IActionResult> SelectService()
-        {
-            ViewBag.CurrentStep = 1;
+ 
+        // ADIM 0: SALON SEÇ
 
+        public async Task<IActionResult> SelectFitnessCenter()
+        {
+            var centers = await _context.FitnessCenters.ToListAsync();
+            return View(centers);
+        }
+
+    
+        // ADIM 1: HİZMET SEÇ
+     
+        public async Task<IActionResult> SelectService(int fitnessCenterId)
+        {
             var services = await _context.GymServices
                 .Include(s => s.FitnessCenter)
+                .Where(s => s.FitnessCenterId == fitnessCenterId)
                 .ToListAsync();
 
+            ViewBag.FitnessCenterId = fitnessCenterId;
             return View(services);
         }
 
-        // ADIM 2: Hizmeti verebilen antrenörü seç
+        // ADIM 2: ANTRENÖR SEÇ 
+      
         public async Task<IActionResult> SelectTrainer(int serviceId)
         {
-            ViewBag.CurrentStep = 2;
-
             var service = await _context.GymServices
                 .Include(s => s.FitnessCenter)
                 .FirstOrDefaultAsync(s => s.Id == serviceId);
@@ -75,6 +90,7 @@ namespace GymReservation.Controllers
             var trainers = await _context.TrainerServices
                 .Where(ts => ts.GymServiceId == serviceId)
                 .Select(ts => ts.Trainer!)
+                .Where(t => t.FitnessCenterId == service.FitnessCenterId)
                 .Distinct()
                 .ToListAsync();
 
@@ -82,15 +98,24 @@ namespace GymReservation.Controllers
             return View(trainers);
         }
 
-        // ADIM 3: Tarih / saat seç
+    
+        // ADIM 3: TARİH / SAAT SEÇ
+   
         public async Task<IActionResult> SelectTime(int serviceId, int trainerId)
         {
-            ViewBag.CurrentStep = 3;
+            var service = await _context.GymServices
+                .Include(s => s.FitnessCenter)
+                .FirstOrDefaultAsync(s => s.Id == serviceId);
 
-            var service = await _context.GymServices.FindAsync(serviceId);
-            var trainer = await _context.Trainers.FindAsync(trainerId);
+            var trainer = await _context.Trainers
+                .Include(t => t.FitnessCenter)
+                .FirstOrDefaultAsync(t => t.Id == trainerId);
 
             if (service == null || trainer == null) return NotFound();
+
+        
+            if (service.FitnessCenterId != trainer.FitnessCenterId)
+                return BadRequest("Salon uyumsuzluğu.");
 
             var availabilities = await _context.TrainerAvailabilities
                 .Where(a => a.TrainerId == trainerId && a.Date >= DateTime.Today)
@@ -104,7 +129,9 @@ namespace GymReservation.Controllers
             return View(availabilities);
         }
 
-        // POST: seçilen müsaitlikten randevu oluştur
+     
+        // POST: MÜSAİTLİKTEN RANDEVU OLUŞTUR
+     
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateFromAvailability(int availabilityId, int serviceId, int trainerId)
@@ -113,40 +140,50 @@ namespace GymReservation.Controllers
                 .FirstOrDefaultAsync(a => a.Id == availabilityId);
 
             var service = await _context.GymServices.FirstOrDefaultAsync(s => s.Id == serviceId);
-            if (availability == null || service == null) return NotFound();
+            var trainer = await _context.Trainers.FirstOrDefaultAsync(t => t.Id == trainerId);
+
+            if (availability == null || service == null || trainer == null)
+                return NotFound();
+
+            // Salon tutarlılığı
+            if (service.FitnessCenterId != trainer.FitnessCenterId)
+                return BadRequest("Salon uyumsuzluğu.");
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Challenge(); // login değilse
+            if (userId == null) return Challenge();
 
             var start = availability.Date.Date + availability.StartTime;
             var duration = (int)(availability.EndTime - availability.StartTime).TotalMinutes;
             if (duration <= 0)
-            {
                 duration = service.DurationMinutes;
-            }
+
             var end = start.AddMinutes(duration);
 
-            // Antrenör için çakışma kontrolü
-            var hasConflictForTrainer = await _context.Appointments
-                .AnyAsync(a => a.TrainerId == trainerId &&
-                               a.StartDateTime < end &&
-                               a.StartDateTime.AddMinutes(a.DurationMinutes) > start);
+            // Antrenör çakışma
+            var trainerConflict = await _context.Appointments
+                .AnyAsync(a =>
+                    a.TrainerId == trainerId &&
+                    a.Status != "İptal" &&
+                    a.StartDateTime < end &&
+                    a.StartDateTime.AddMinutes(a.DurationMinutes) > start);
 
-            if (hasConflictForTrainer)
+            if (trainerConflict)
             {
                 TempData["Error"] = "Bu zaman diliminde antrenörün başka randevusu var.";
                 return RedirectToAction(nameof(SelectTime), new { serviceId, trainerId });
             }
 
-            // Kullanıcı için çakışma kontrolü
-            var hasConflictForUser = await _context.Appointments
-                .AnyAsync(a => a.UserId == userId &&
-                               a.StartDateTime < end &&
-                               a.StartDateTime.AddMinutes(a.DurationMinutes) > start);
+            // Kullanıcı çakışma
+            var userConflict = await _context.Appointments
+                .AnyAsync(a =>
+                    a.UserId == userId &&
+                    a.Status != "İptal" &&
+                    a.StartDateTime < end &&
+                    a.StartDateTime.AddMinutes(a.DurationMinutes) > start);
 
-            if (hasConflictForUser)
+            if (userConflict)
             {
-                TempData["Error"] = "Bu zaman diliminde başka bir randevunuz var.";
+                TempData["Error"] = "Bu zaman diliminde başka randevunuz var.";
                 return RedirectToAction(nameof(SelectTime), new { serviceId, trainerId });
             }
 
@@ -168,12 +205,17 @@ namespace GymReservation.Controllers
             return RedirectToAction(nameof(MyAppointments));
         }
 
-        // ADMIN: durum değiştirme (Onayla / İptal et)
+   
+        // ADMIN: DURUM DEĞİŞTİR
+     
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(int id, string status)
         {
+            if (status != "Beklemede" && status != "Onaylandı" && status != "İptal")
+                return BadRequest();
+
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null) return NotFound();
 
